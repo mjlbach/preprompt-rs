@@ -11,26 +11,6 @@ use walkdir::WalkDir;
 
 const DEFAULT_OUTPUT_FORMAT: &str = "markdown";
 
-#[derive(clap::ValueEnum, Clone, Debug)]  
-enum Level {  
-   Debug,  
-   Info,  
-   Warning,  
-   Error,  
-}
-
-// Conversion from custom Level to log::LevelFilter
-impl From<Level> for log::LevelFilter {
-    fn from(level: Level) -> Self {
-        match level {
-            Level::Debug => log::LevelFilter::Debug,
-            Level::Info => log::LevelFilter::Info,
-            Level::Warning => log::LevelFilter::Warn,
-            Level::Error => log::LevelFilter::Error,
-        }
-    }
-}
-
 // You can also use the doc comments for help messages.
 /// Copies content of text files to the clipboard.
 #[derive(Parser, Debug)]
@@ -48,7 +28,6 @@ struct Cli {
     #[clap(short, long, default_value = DEFAULT_OUTPUT_FORMAT)]
     output_format: String,
 }
-
 
 fn main() -> Result<()> {
     let args = Cli::parse();
@@ -83,6 +62,27 @@ fn main() -> Result<()> {
     info!("File contents copied to clipboard!");
 
     Ok(())
+}
+
+
+#[derive(clap::ValueEnum, Clone, Debug)]  
+enum Level {  
+   Debug,  
+   Info,  
+   Warning,  
+   Error,  
+}
+
+// Conversion from custom Level to log::LevelFilter
+impl From<Level> for log::LevelFilter {
+    fn from(level: Level) -> Self {
+        match level {
+            Level::Debug => log::LevelFilter::Debug,
+            Level::Info => log::LevelFilter::Info,
+            Level::Warning => log::LevelFilter::Warn,
+            Level::Error => log::LevelFilter::Error,
+        }
+    }
 }
 
 fn setup_logger(level: Level) -> Result<()> {

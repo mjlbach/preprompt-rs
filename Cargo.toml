@@ -24,3 +24,4 @@ log = "0.4.20"
 simple_logger = "4.3.0"
 anyhow = "1.0.75"
 clap = { version = "4.4.8", features = ["derive"] }
+rayon = "1.8.0"

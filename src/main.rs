@@ -8,6 +8,7 @@ use std::{fs,io};
 use std::io::Read;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
+use rayon::prelude::*;
 
 const DEFAULT_OUTPUT_FORMAT: &str = "markdown";
 
@@ -21,7 +22,7 @@ struct Cli {
     path: PathBuf,
     
     /// Log level for verbosity control
-    #[clap(value_enum, default_value_t = Level::Warning)]
+    #[clap(long, value_enum, default_value_t = Level::Warning)]
     log_level: Level,
     
     /// The output format for the clipboard (markdown or plain)
@@ -29,41 +30,45 @@ struct Cli {
     output_format: String,
 }
 
-fn main() -> Result<()> {
+fn main() -> Result<(), anyhow::Error> {
     let args = Cli::parse();
+    
     setup_logger(args.log_level)?;
 
     let directory_path = fs::canonicalize(&args.path)
-    .with_context(|| "Unable to find or access the specified directory path")?;
+        .with_context(|| "Unable to find or access the specified directory path")?;
 
     if !directory_path.is_dir() {
         warn!("The path specified is not a directory.");
         return Ok(());
     }
 
-    let mut clipboard_content = String::with_capacity(1024); // Pre-allocate some memory to reduce reallocation.
-    for entry in WalkDir::new(&directory_path)
+    let entries: Vec<_> = WalkDir::new(&directory_path)
         .into_iter()
         .filter_map(|e| e.ok())
-        .filter(|e| e.file_type().is_file() && is_text_file(e.path())) {
-        let file_path = entry.path();
-        let relative_path = file_path.strip_prefix(&directory_path).context("Failed to compute relative path")?;
+        .filter(|e| e.file_type().is_file() && is_text_file(e.path()))
+        .collect();
 
-        info!("Traversing file: {}", relative_path.display());
+    let clipboard_content: String = entries.par_iter()
+        .filter_map(|entry| {
+            let file_path = entry.path();
+            let relative_path = file_path.strip_prefix(&directory_path).ok()?;
+            info!("Traversing file: {}", relative_path.display());
 
-        let file_contents = read_file_to_string(file_path)?;
+            let file_contents = read_file_to_string(file_path).ok()?;
             let first_line = file_contents.lines().next().unwrap_or("File is empty or unreadable");
-        info!("First line of {}: {}", relative_path.display(), first_line);
-        clipboard_content.push_str(&format_output(relative_path, file_contents, &args.output_format)?);
-    }
+            let debug_line = &first_line[..first_line.len().min(100)];
+
+            info!("First line of {}: {}", relative_path.display(), &debug_line);
+
+            Some(format_output(relative_path, file_contents, &args.output_format).ok()?)
+        })
+        .collect();
 
     copy_to_clipboard(&clipboard_content)?;
 
-    info!("File contents copied to clipboard!");
-
     Ok(())
 }
-
 
 #[derive(clap::ValueEnum, Clone, Debug)]  
 enum Level {  

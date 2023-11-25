@@ -36,7 +36,7 @@ impl From<Level> for log::LevelFilter {
 struct Cli {
     #[clap(help = "The path to the directory to traverse", value_parser(clap::value_parser!(PathBuf)))]
     path: PathBuf,
-    #[clap(value_enum)]
+    #[clap(value_enum, default_value_t = Level::Warning)]
     log_level: Level,
     #[clap(short, long, default_value = DEFAULT_OUTPUT_FORMAT)]
     output_format: String,

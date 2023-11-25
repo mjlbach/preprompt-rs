@@ -31,13 +31,20 @@ impl From<Level> for log::LevelFilter {
     }
 }
 
+// You can also use the doc comments for help messages.
+/// Copies content of text files to the clipboard.
 #[derive(Parser, Debug)]
-#[clap(author, version, about)]
+#[clap(author, version, about = "A CLI tool to copy text file contents to clipboard", long_about = None)]
 struct Cli {
-    #[clap(help = "The path to the directory to traverse", value_parser(clap::value_parser!(PathBuf)))]
+    /// The path to the directory to traverse
+    #[clap(help = "The file path for the directory to be processed")]
     path: PathBuf,
+    
+    /// Log level for verbosity control
     #[clap(value_enum, default_value_t = Level::Warning)]
     log_level: Level,
+    
+    /// The output format for the clipboard (markdown or plain)
     #[clap(short, long, default_value = DEFAULT_OUTPUT_FORMAT)]
     output_format: String,
 }

@@ -11,24 +11,37 @@ PrePrompt-RS is a Rust command-line tool designed to recursively read text files
 
 ## Installation
 
-To install PrePrompt-RS, you need to have Rust and Cargo installed on your machine. If you don't have them installed, you can get them from [the official Rust website](https://www.rust-lang.org/learn/get-started).
+### From Source
 
-Once Rust and Cargo are installed, you can clone the repository and build the project:
+Before the project is published to crates.io, you can install it directly from the source using Cargo. First, clone the repository:
 
 ```sh
-git clone https://github.com/your-username/preprompt-rs.git
+git clone https://github.com/mjlbach/preprompt-rs.git
 cd preprompt-rs
-cargo build --release
 ```
 
-The compiled binary will be located at `target/release/preprompt-rs`.
+Then, install the binary `prep` using Cargo:
+
+```sh
+cargo install --path .
+```
+
+This will install the `prep` binary to your Cargo bin directory, which should be in your system's PATH.
+
+### From crates.io
+
+After the project is published to crates.io, you can install it using Cargo with the following command:
+
+```sh
+cargo install preprompt-rs
+```
 
 ## Usage
 
-To use PrePrompt-RS, simply run the binary with the path to the directory you want to process:
+Once installed, you can use the `prep` command followed by the path to the directory you want to process:
 
 ```sh
-./target/release/preprompt-rs /path/to/directory
+prep /path/to/directory
 ```
 
 The contents of the text files will be copied to your clipboard in Markdown format.

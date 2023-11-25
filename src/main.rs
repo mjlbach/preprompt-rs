@@ -78,11 +78,20 @@ fn format_output<P: AsRef<Path>, S: AsRef<str>>(relative_path: P, contents: S, f
     }
 }
 
+fn copy_to_clipboard(content: &str) -> Result<()> {
+    let mut ctx: ClipboardContext = ClipboardProvider::new()
+        .map_err(|e| anyhow::Error::msg(format!("Failed to create clipboard context: {}", e)))?;
+    ctx.set_contents(content.to_owned())
+        .map_err(|e| anyhow::Error::msg(format!("Failed to copy contents to clipboard: {}", e)))
+}
+
 fn main() -> Result<()> {
     let args = Cli::parse();
     setup_logger(args.log_level)?;
 
-    let directory_path = fs::canonicalize(&args.path).context("Failed to canonicalize path")?;
+    let directory_path = fs::canonicalize(&args.path)
+    .with_context(|| "Unable to find or access the specified directory path")?;
+
     if !directory_path.is_dir() {
         warn!("The path specified is not a directory.");
         return Ok(());
@@ -99,15 +108,12 @@ fn main() -> Result<()> {
         info!("Traversing file: {}", relative_path.display());
 
         let file_contents = read_file_to_string(file_path)?;
-        let first_line = file_contents.lines().next().unwrap_or_default();
+            let first_line = file_contents.lines().next().unwrap_or("File is empty or unreadable");
         info!("First line of {}: {}", relative_path.display(), first_line);
         clipboard_content.push_str(&format_output(relative_path, file_contents, &args.output_format)?);
     }
 
-    let mut ctx: ClipboardContext = ClipboardProvider::new()
-        .map_err(|e| anyhow::Error::msg(format!("Failed to create clipboard context: {}", e)))?;
-    ctx.set_contents(clipboard_content)
-        .map_err(|e| anyhow::Error::msg(format!("Failed to copy contents to clipboard: {}", e)))?;
+    copy_to_clipboard(&clipboard_content)?;
 
     info!("File contents copied to clipboard!");
 
